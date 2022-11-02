@@ -121,6 +121,63 @@ if (!function_exists('breakpoint')) {
     }
 }
 
+if (!function_exists('stackTrace')) {
+    /**
+     * Outputs a stack trace based on the supplied options.
+     *
+     * ### Options
+     *
+     * - `depth` - The number of stack frames to return. Defaults to 999
+     * - `args` - Should arguments for functions be shown? If true, the arguments for each method call
+     *   will be displayed.
+     * - `start` - The stack frame to start generating a trace from. Defaults to 1
+     *
+     * @param array<string, mixed> $options Format for outputting stack trace
+     * @return void
+     */
+    function stackTrace(array $options = []): void
+    {
+        if (!Configure::read('debug')) {
+            return;
+        }
+
+        $options += ['start' => 0];
+        $options['start']++;
+
+        /** @var string $trace */
+        $trace = Debugger::trace($options);
+        echo $trace;
+    }
+
+}
+
+if (!function_exists('breakpoint')) {
+    /**
+     * Command to return the eval-able code to startup PsySH in interactive debugger
+     * Works the same way as eval(\Psy\sh());
+     * psy/psysh must be loaded in your project
+     *
+     * ```
+     * eval(breakpoint());
+     * ```
+     *
+     * @return string|null
+     * @link http://psysh.org/
+     */
+    function breakpoint(): ?string
+    {
+        if ((PHP_SAPI === 'cli' || PHP_SAPI === 'phpdbg') && class_exists(PsyShell::class)) {
+            return 'extract(\Psy\Shell::debug(get_defined_vars(), isset($this) ? $this : null));';
+        }
+        trigger_error(
+            'psy/psysh must be installed and you must be in a CLI environment to use the breakpoint function',
+            E_USER_WARNING
+        );
+
+        return null;
+    }
+}
+
 if (!function_exists('dd')) {
     /**
      * Prints out debug information about given variable and dies.
